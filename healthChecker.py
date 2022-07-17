@@ -40,7 +40,6 @@ class HealthChecker:
                 self.services.append(s)
 
     async def check_service(self, session, s: Service):
-        print(s.config.name)
         sc = s.config
         s.errors = []
         hasErrors = False

@@ -22,6 +22,7 @@ class MyBot:
         self.application.add_handler(CommandHandler('subscribe', self.subscribe))
         self.application.add_handler(CommandHandler('unsubscribe', self.unsubscribe))
         self.application.add_handler(CommandHandler('status', self.status))
+        self.application.add_handler(CommandHandler('details', self.details))
 
         self.application.job_queue.run_repeating(callback=lambda x: self.notify(), interval=timedelta(seconds=60))
 
@@ -50,27 +51,52 @@ class MyBot:
         await context.bot.send_message(chat_id=update.effective_chat.id, text="You have been unsubscribed")
 
     async def status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        statuses = await self.healthChecker.get_status()
+        await self.healthChecker.ping()
+        statuses = await self.healthChecker.get_statuses()
 
         if statuses:
             msg = ""
             for stat in statuses:
                 msg += "\n"
-                if statuses[stat]:
+                if stat.is_up:
                     msg += "✔️ "
                 else:
                     msg += "❌ "
-                msg += stat
+                msg += stat.config.name
+            msg = msg[1:]
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        else:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="No services registered")
+
+    async def details(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.healthChecker.ping()
+        statuses = await self.healthChecker.get_statuses()
+
+        if statuses:
+            msg = ""
+            for stat in statuses:
+                msg += "\n"
+                if stat.is_up:
+                    msg += "✔️ "
+                    msg += stat.config.name
+                else:
+                    msg += "❌ "
+                    msg += stat.config.name + ":"
+                    if stat.errors:
+                        msg += ''.join(['\n\t\t' + i for i in stat.errors])
+                    else:
+                        msg += '\nNo errors.'
             msg = msg[1:]
             await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
         else:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="No services registered")
 
     async def notify(self):
-        check = await self.healthChecker.check_services()
-        if check:
+        await self.healthChecker.ping()
+        errors = await self.healthChecker.get_errors()
+        if errors:
             for subscriber in self.subscribers:
-                await self.bot.send_message(chat_id=subscriber, text=check)
+                await self.bot.send_message(chat_id=subscriber, text=errors)
 
 
 def main():

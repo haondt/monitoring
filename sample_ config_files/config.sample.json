@@ -1,0 +1,13 @@
+[
+    {
+        "name": "Sonarr",
+        "contains": [
+            "\"appName\": \"Sonarr\""
+        ],
+        "url": "http://sonarr.:8989/api/v3/system/status",
+        "status": 200,
+        "headers": {
+            "X-Api-Key": ""
+        }
+    }
+]

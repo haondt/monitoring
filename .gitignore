@@ -1,0 +1,6 @@
+.vscode
+subscribers.json
+config.json
+settings.json
+.pytest_cache
+__pycache__
